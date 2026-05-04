@@ -381,7 +381,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   const emailConfig = {
     host: 'smtp.yandex.ru',
-    port: 465,
+    port: 587,
     secure: true,
     auth: {
       user: 'Kai22851@yandex.ru',

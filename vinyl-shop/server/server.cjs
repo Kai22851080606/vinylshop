@@ -343,7 +343,7 @@ function escapeHtml(str) {
 
 // ===== Настройка SendGrid (один раз) =====
 const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey('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')
+sgMail.setApiKey('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')
 
 // ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {

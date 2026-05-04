@@ -341,10 +341,11 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// ===== Функция отправки email для заказа =====
+// ===== Настройка SendGrid (один раз) =====
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey('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')
 
+// ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {
   try {
     console.log(`📧 Отправка через SendGrid на ${userEmail}...`)
@@ -363,9 +364,6 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
 }
 
 // ===== Функция отправки email для восстановления пароля =====
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey('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')
-
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   try {
     console.log(`📧 Отправка письма восстановления через SendGrid на ${userEmail}...`)

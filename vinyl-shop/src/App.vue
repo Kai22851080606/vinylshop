@@ -15,7 +15,7 @@ const createSessionOnLoad = async () => {
   if (currentUser && currentUser.id) {
     try {
       console.log('🔄 Создание сеанса при загрузке страницы для пользователя:', currentUser.id)
-      const response = await fetch('/api/create-session', {
+      const response = await fetch('http://localhost:3001/api/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id })

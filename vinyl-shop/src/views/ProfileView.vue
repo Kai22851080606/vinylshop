@@ -398,7 +398,7 @@ const getTypeLabel = (type) => {
 const loadOrders = async () => {
   if (!user.value?.email) return
   try {
-    const response = await fetch(`/api/orders/user/${encodeURIComponent(user.value.email)}`)
+    const response = await fetch(`http://localhost:3001/api/orders/user/${encodeURIComponent(user.value.email)}`)
     if (response.ok) {
       const orders = await response.json()
       ordersCount.value = orders.length
@@ -416,7 +416,7 @@ const loadOrders = async () => {
 const loadFavoriteNews = async () => {
   if (!user.value?.id) return
   try {
-    const response = await fetch(`/api/favorite-news/${user.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/favorite-news/${user.value.id}`)
     if (response.ok) favoriteNewsList.value = await response.json()
   } catch (error) { console.error('Ошибка загрузки избранных новостей:', error) }
 }
@@ -432,7 +432,7 @@ const toggleNewsFavorite = async (newsId) => {
   
   try {
     if (isFavorite) {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.value.id, newsId })
@@ -441,7 +441,7 @@ const toggleNewsFavorite = async (newsId) => {
         favoriteNewsList.value = favoriteNewsList.value.filter(n => n.id !== newsId)
       }
     } else {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.value.id, newsId })
@@ -473,7 +473,7 @@ const loadRecentViews = () => {
 const loadRecentSessions = async () => {
   if (!user.value?.id) return
   try {
-    const response = await fetch(`/api/user-sessions/${user.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/user-sessions/${user.value.id}`)
     if (response.ok) {
       const allSessions = await response.json()
       const sortedSessions = allSessions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))

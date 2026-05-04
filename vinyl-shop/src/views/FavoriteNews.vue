@@ -62,7 +62,7 @@ const loadFavoriteNews = async () => {
   
   loading.value = true
   try {
-    const response = await fetch(`/api/favorite-news/${currentUser.id}`)
+    const response = await fetch(`http://localhost:3001/api/favorite-news/${currentUser.id}`)
     if (response.ok) {
       favoriteNews.value = await response.json()
     }
@@ -78,7 +78,7 @@ const removeFromFavorites = async (newsId) => {
   if (!currentUser?.id) return
   
   try {
-    const response = await fetch('/api/favorite-news', {
+    const response = await fetch('http://localhost:3001/api/favorite-news', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: currentUser.id, newsId })

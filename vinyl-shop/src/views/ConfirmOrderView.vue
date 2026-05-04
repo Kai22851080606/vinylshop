@@ -90,7 +90,7 @@ const confirmOrder = async () => {
   orderNumber.value = route.params.id
   
   try {
-    const response = await fetch(`/api/orders/confirm/${orderNumber.value}`, {
+    const response = await fetch(`http://localhost:3001/api/orders/confirm/${orderNumber.value}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })

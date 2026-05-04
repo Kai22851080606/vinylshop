@@ -531,7 +531,7 @@ const formatDate = (dateString) => {
 const fetchVinylRating = async () => {
   if (!vinyl.value) return
   try {
-    const response = await fetch(`/api/reviews/vinyl/${vinyl.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/reviews/vinyl/${vinyl.value.id}`)
     if (response.ok) {
       const allReviews = await response.json()
       const approved = allReviews.filter(r => r.is_approved)
@@ -551,7 +551,7 @@ const fetchVinylRating = async () => {
 
 const fetchReviews = async () => {
   try {
-    const response = await fetch(`/api/reviews/vinyl/${route.params.id}`)
+    const response = await fetch(`http://localhost:3001/api/reviews/vinyl/${route.params.id}`)
     if (response.ok) {
       reviews.value = await response.json()
       console.log('✅ Загружено отзывов:', reviews.value.length)
@@ -577,7 +577,7 @@ const submitReview = async () => {
   submittingReview.value = true
   
   try {
-    const response = await fetch('/api/reviews', {
+    const response = await fetch('http://localhost:3001/api/reviews', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -792,7 +792,7 @@ const saveVinylView = (vinylData) => {
 const loadAllVinyls = async () => {
   loadingVinyls.value = true
   try {
-    const response = await fetch('/api/vinyls')
+    const response = await fetch('http://localhost:3001/api/vinyls')
     if (response.ok) {
       allVinyls.value = await response.json()
     }
@@ -806,7 +806,7 @@ const loadAllVinyls = async () => {
 const loadSingleVinyl = async () => {
   loading.value = true
   try {
-    const response = await fetch(`/api/vinyls/${route.params.id}`)
+    const response = await fetch(`http://localhost:3001/api/vinyls/${route.params.id}`)
     if (response.ok) {
       vinyl.value = await response.json()
       saveVinylView(vinyl.value)

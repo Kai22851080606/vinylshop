@@ -10,7 +10,7 @@ export const useCartStore = defineStore('cart', () => {
   // Загрузка активных акций
   const loadPromotions = async () => {
     try {
-      const response = await fetch('/api/promotions/active')
+      const response = await fetch('http://localhost:3001/api/promotions/active')
       if (response.ok) {
         activePromotions.value = await response.json()
         console.log('✅ Загружено акций:', activePromotions.value.length)

@@ -248,7 +248,7 @@ const sendResetLink = async () => {
   
   try {
     // Ищем пользователя по ЛОГИНУ, а не по email
-    const response = await fetch('/api/forgot-password', {
+    const response = await fetch('http://localhost:3001/api/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 

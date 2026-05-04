@@ -403,7 +403,7 @@ const fetchOrders = async () => {
 const fetchReviews = async () => {
   if (!selectedArtist.value) return
   try {
-    const response = await fetch(`/api/reviews/artist/${selectedArtist.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/reviews/artist/${selectedArtist.value.id}`)
     if (response.ok) {
       const allReviews = await response.json()
       reviews.value = allReviews
@@ -479,7 +479,7 @@ const submitReview = async () => {
   submittingReview.value = true
   
   try {
-    const response = await fetch('/api/reviews', {
+    const response = await fetch('http://localhost:3001/api/reviews', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -553,7 +553,7 @@ const handleImageError = (e) => {
 
 const fetchServiceById = async (serviceId) => {
   try {
-    const response = await fetch(`/api/services/${serviceId}`)
+    const response = await fetch(`http://localhost:3001/api/services/${serviceId}`)
     if (response.ok) {
       selectedService.value = await response.json()
       checkIfInCart()
@@ -565,7 +565,7 @@ const fetchServiceById = async (serviceId) => {
 
 const fetchArtistById = async (artistId) => {
   try {
-    const response = await fetch(`/api/artists/${artistId}`)
+    const response = await fetch(`http://localhost:3001/api/artists/${artistId}`)
     if (response.ok) {
       selectedArtist.value = await response.json()
       checkIfInCart()

@@ -440,7 +440,7 @@ const parsedDelivery = computed(() => {
 const fetchOrders = async () => {
   loading.value = true
   try {
-    const response = await fetch('/api/orders')
+    const response = await fetch('http://localhost:3001/api/orders')
     if (response.ok) {
       orders.value = await response.json()
       console.log('📦 Загружены заказы:', orders.value)

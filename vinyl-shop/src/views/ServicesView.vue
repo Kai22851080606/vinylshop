@@ -222,7 +222,7 @@ const addArtistToCart = (artist) => {
 // ТОЧНО КАК В SERVICESDETAILVIEW
 const fetchOrders = async () => {
   try {
-    const response = await fetch('api/orders')
+    const response = await fetch('http://localhost:3001/api/orders')
     if (response.ok) {
       orders.value = await response.json()
     }
@@ -233,7 +233,7 @@ const fetchOrders = async () => {
 
 const fetchAllServices = async () => {
   try {
-    const response = await fetch('/api/services')
+    const response = await fetch('http://localhost:3001/api/services')
     if (response.ok) {
       allServices.value = await response.json()
     }
@@ -244,7 +244,7 @@ const fetchAllServices = async () => {
 
 const fetchArtists = async () => {
   try {
-    const response = await fetch('/api/artists')
+    const response = await fetch('http://localhost:3001/api/artists')
     if (response.ok) {
       artists.value = await response.json()
     }

@@ -896,6 +896,16 @@ const services = {
 // ===== ФУНКЦИИ ДЛЯ РАБОТЫ С АКЦИЯМИ =====
 const promotions = {
   getAll: (includeDeleted = false) => new Promise((resolve, reject) => {
+    // Автоматически деактивируем просроченные акции
+    const now = new Date().toISOString();
+    db.run(`
+      UPDATE promotions 
+      SET active = 0 
+      WHERE end_date IS NOT NULL AND end_date < ? AND active = 1
+    `, [now], (err) => {
+      if (err) console.error('Ошибка деактивации акций:', err);
+    });
+    
     const query = includeDeleted 
       ? 'SELECT * FROM promotions ORDER BY id'
       : 'SELECT * FROM promotions WHERE deleted = 0 ORDER BY id';
@@ -921,6 +931,13 @@ const promotions = {
   
   getActive: () => new Promise((resolve, reject) => {
     const now = new Date().toISOString();
+    // Автоматически деактивируем просроченные акции
+    db.run(`
+      UPDATE promotions 
+      SET active = 0 
+      WHERE end_date IS NOT NULL AND end_date < ? AND active = 1
+    `, [now]);
+    
     db.all(`
       SELECT * FROM promotions 
       WHERE deleted = 0 

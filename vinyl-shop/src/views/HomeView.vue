@@ -272,32 +272,32 @@ const performSearchFromQuery = () => { searchQuery.value = route.query.search ||
 
 const fetchOrders = async () => { 
   try { 
-    const r = await fetch('/api/orders'); 
+    const r = await fetch('http://localhost:3001/api/orders'); 
     if (r.ok) orders.value = await r.json()
   } catch(e) { console.error(e) } 
 }
 
 const fetchVinyls = async () => { 
   try { 
-    const r = await fetch('/api/vinyls'); 
+    const r = await fetch('http://localhost:3001/api/vinyls'); 
     if (r.ok) vinyls.value = await r.json()
   } catch(e) { console.error(e) } 
 }
 const fetchNews = async () => { 
   try { 
-    const r = await fetch('/api/news'); 
+    const r = await fetch('http://localhost:3001/api/news'); 
     if (r.ok) news.value = await r.json()
   } catch(e) { console.error(e) } 
 }
 const fetchServices = async () => { 
   try { 
-    const r = await fetch('/api/services'); 
+    const r = await fetch('http://localhost:3001/api/services'); 
     if (r.ok) services.value = await r.json()
   } catch(e) { console.error(e) } 
 }
 const fetchArtists = async () => { 
   try { 
-    const r = await fetch('/api/artists'); 
+    const r = await fetch('http://localhost:3001/api/artists'); 
     if (r.ok) artists.value = await r.json()
   } catch(e) { console.error(e) } 
 }

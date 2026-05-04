@@ -329,7 +329,7 @@ const translateNews = async () => {
 const fetchReviews = async () => {
   if (!singleNews.value) return
   try {
-    const response = await fetch(`/api/reviews/news/${singleNews.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/reviews/news/${singleNews.value.id}`)
     if (response.ok) {
       const allReviews = await response.json()
       reviews.value = allReviews
@@ -365,7 +365,7 @@ const submitReview = async () => {
   submittingReview.value = true
   
   try {
-    const response = await fetch('/api/reviews', {
+    const response = await fetch('http://localhost:3001/api/reviews', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -431,7 +431,7 @@ const isFavorite = (newsId) => {
 const loadFavoriteNews = async () => {
   if (!isAuthenticated.value || !currentUser.value?.id) return
   try {
-    const response = await fetch(`/api/favorite-news/${currentUser.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/favorite-news/${currentUser.value.id}`)
     if (response.ok) {
       const favs = await response.json()
       favoriteNewsIds.value = new Set(favs.map(f => f.id))
@@ -450,7 +450,7 @@ const toggleFavorite = async () => {
   
   try {
     if (isFavorite(singleNews.value.id)) {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId: singleNews.value.id })
@@ -459,7 +459,7 @@ const toggleFavorite = async () => {
         favoriteNewsIds.value.delete(singleNews.value.id)
       }
     } else {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId: singleNews.value.id })
@@ -482,7 +482,7 @@ const toggleFavoriteFromList = async (newsId) => {
   
   try {
     if (favoriteNewsIds.value.has(newsId)) {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId })
@@ -491,7 +491,7 @@ const toggleFavoriteFromList = async (newsId) => {
         favoriteNewsIds.value.delete(newsId)
       }
     } else {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId })
@@ -512,7 +512,7 @@ const goToNews = (id) => {
 const loadAllNews = async () => {
   loadingNews.value = true
   try {
-    const response = await fetch('/api/news')
+    const response = await fetch('http://localhost:3001/api/news')
     if (response.ok) {
       allNews.value = await response.json()
       console.log('✅ Загружено новостей для поиска:', allNews.value.length)
@@ -529,7 +529,7 @@ const loadSingleNews = async () => {
   try {
     const id = route.params.id
     console.log('Загрузка новости с ID:', id)
-    const response = await fetch(`/api/news/${id}`)
+    const response = await fetch(`http://localhost:3001/api/news/${id}`)
     if (response.ok) {
       singleNews.value = await response.json()
       console.log('✅ Новость загружена:', singleNews.value.title)

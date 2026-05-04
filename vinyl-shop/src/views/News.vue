@@ -183,7 +183,7 @@ const fetchNews = async () => {
   error.value = null
   
   try {
-    const response = await fetch('/api/news')
+    const response = await fetch('http://localhost:3001/api/news')
     if (!response.ok) throw new Error('Ошибка загрузки новостей')
     news.value = await response.json()
   } catch (err) {
@@ -197,7 +197,7 @@ const fetchNews = async () => {
 const loadFavoriteNews = async () => {
   if (!currentUser.value?.id) return
   try {
-    const response = await fetch(`/api/favorite-news/${currentUser.value.id}`)
+    const response = await fetch(`http://localhost:3001/api/favorite-news/${currentUser.value.id}`)
     if (response.ok) {
       favoriteNews.value = await response.json()
     }
@@ -216,7 +216,7 @@ const handleToggleFavorite = async (newsId) => {
   
   try {
     if (fav) {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId })
@@ -225,7 +225,7 @@ const handleToggleFavorite = async (newsId) => {
         favoriteNews.value = favoriteNews.value.filter(f => f.id !== newsId)
       }
     } else {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId })

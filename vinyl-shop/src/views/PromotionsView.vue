@@ -158,7 +158,7 @@ const fetchPromotions = async () => {
   error.value = null
   
   try {
-    const response = await fetch('/api/promotions/active')
+    const response = await fetch('http://localhost:3001/api/promotions/active')
     if (!response.ok) throw new Error('Ошибка загрузки акций')
     promotions.value = await response.json()
     console.log('✅ Загружено акций:', promotions.value.length)

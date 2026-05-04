@@ -20,7 +20,7 @@ export const useFavoritesStore = defineStore('favorites', () => {
     
     loading.value = true
     try {
-      const response = await fetch(`/api/favorites/${currentUser.id}`)
+      const response = await fetch(`http://localhost:3001/api/favorites/${currentUser.id}`)
       if (response.ok) {
         favorites.value = await response.json()
         console.log('Загружено избранное:', favorites.value.length)

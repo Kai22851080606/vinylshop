@@ -477,7 +477,7 @@ const handleRegister = async () => {
       avatarBase64 = avatarPreview.value
     }
 
-    const response = await fetch('/api/register', {
+    const response = await fetch('http://localhost:3001/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -497,7 +497,7 @@ const handleRegister = async () => {
     const data = await response.json()
 
     if (response.ok && data.success) {
-      const loginResponse = await fetch('/api/login', {
+      const loginResponse = await fetch('http://localhost:3001/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

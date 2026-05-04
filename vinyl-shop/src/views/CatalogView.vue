@@ -460,7 +460,7 @@ const toggleNewsFavorite = async (newsId) => {
   
   try {
     if (favoriteNewsIds.value.has(newsId)) {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId })
@@ -469,7 +469,7 @@ const toggleNewsFavorite = async (newsId) => {
         favoriteNewsIds.value.delete(newsId)
       }
     } else {
-      const response = await fetch('/api/favorite-news', {
+      const response = await fetch('http://localhost:3001/api/favorite-news', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.value.id, newsId })
@@ -490,7 +490,7 @@ const addArtistToCart = (a) => { cartStore.addService(a); alert(`"${a.name}" д�
 const goToVinylDetail = (id) => router.push(`/vinyl/${id}`)
 const goToNewsDetail = async (id) => {
   try {
-    await fetch(`/api/news/${id}/view`, { method: 'POST' })
+    await fetch(`http://localhost:3001/api/news/${id}/view`, { method: 'POST' })
     const newsItem = news.value.find(n => n.id === id)
     if (newsItem) newsItem.views = (newsItem.views || 0) + 1
   } catch (e) { console.error('Ошибка увеличения просмотров:', e) }
@@ -525,7 +525,7 @@ const getPromotionDetails = (p) => {
 // Загрузка заказов из API (СИНХРОНИЗИРОВАНО С SERVICESDETAILVIEW)
 const fetchOrders = async () => {
   try {
-    const response = await fetch('/api/orders')
+    const response = await fetch('http://localhost:3001/api/orders')
     if (response.ok) {
       const data = await response.json()
       
@@ -554,11 +554,11 @@ const fetchOrders = async () => {
   }
 }
 
-const fetchVinyls = async () => { try { const r = await fetch('/api/vinyls'); if (r.ok) vinyls.value = await r.json() } catch(e) { console.error(e) } }
-const fetchNews = async () => { try { const r = await fetch('/api/news'); if (r.ok) news.value = await r.json() } catch(e) { console.error(e) } }
-const fetchServices = async () => { try { const r = await fetch('/api/services'); if (r.ok) allServices.value = await r.json() } catch(e) { console.error(e) } }
-const fetchArtists = async () => { try { const r = await fetch('/api/artists'); if (r.ok) artists.value = await r.json() } catch(e) { console.error(e) } }
-const fetchPromotions = async () => { try { const r = await fetch('/api/promotions/active'); if (r.ok) activePromotions.value = await r.json() } catch(e) { console.error(e) } }
+const fetchVinyls = async () => { try { const r = await fetch('http://localhost:3001/api/vinyls'); if (r.ok) vinyls.value = await r.json() } catch(e) { console.error(e) } }
+const fetchNews = async () => { try { const r = await fetch('http://localhost:3001/api/news'); if (r.ok) news.value = await r.json() } catch(e) { console.error(e) } }
+const fetchServices = async () => { try { const r = await fetch('http://localhost:3001/api/services'); if (r.ok) allServices.value = await r.json() } catch(e) { console.error(e) } }
+const fetchArtists = async () => { try { const r = await fetch('http://localhost:3001/api/artists'); if (r.ok) artists.value = await r.json() } catch(e) { console.error(e) } }
+const fetchPromotions = async () => { try { const r = await fetch('http://localhost:3001/api/promotions/active'); if (r.ok) activePromotions.value = await r.json() } catch(e) { console.error(e) } }
 
 onMounted(async () => {
   loading.value = true

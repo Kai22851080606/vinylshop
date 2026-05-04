@@ -342,74 +342,44 @@ function escapeHtml(str) {
 }
 
 // ===== Функция отправки email для заказа =====
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey('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')
+
 async function sendOrderEmail(orderData, userEmail, orderId) {
-  const emailConfig = {
-    host: 'smtp.yandex.ru',
-    port: 465,
-    secure: true,
-    auth: {
-      user: 'Kai22851@yandex.ru',
-      pass: 'rzpzztubhlnjmvls'
-    },
-    tls: { rejectUnauthorized: false }
-  };
-
   try {
-    console.log(`📧 Попытка отправки email на ${userEmail}...`);
-    const transporter = nodemailer.createTransport(emailConfig);
-    await transporter.verify();
-    console.log('✅ SMTP соединение установлено');
-    
-    const mailOptions = {
-      from: `"vinyl-shop" <${emailConfig.auth.user}>`,
+    console.log(`📧 Отправка через SendGrid на ${userEmail}...`)
+    await sgMail.send({
       to: userEmail,
+      from: 'kai22851@yandex.ru',
       subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
-      html: generateOrderEmail(orderData, orderId),
-      headers: { 'Date': new Date().toUTCString() }
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email успешно отправлен! ID:', info.messageId);
-    return { success: true };
+      html: generateOrderEmail(orderData, orderId)
+    })
+    console.log('✅ Email отправлен!')
+    return { success: true }
   } catch (error) {
-    console.error('❌ Ошибка отправки email:', error.message);
-    return { success: false, error: error.message };
+    console.error('❌ Ошибка:', error.message)
+    return { success: false, error: error.message }
   }
 }
 
 // ===== Функция отправки email для восстановления пароля =====
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey('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')
+
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
-  const emailConfig = {
-    host: 'smtp.yandex.ru',
-    port: 587,
-    secure: true,
-    auth: {
-      user: 'Kai22851@yandex.ru',
-      pass: 'rzpzztubhlnjmvls'
-    },
-    tls: { rejectUnauthorized: false }
-  };
-
   try {
-    console.log(`📧 Попытка отправки письма восстановления на ${userEmail}...`);
-    const transporter = nodemailer.createTransport(emailConfig);
-    await transporter.verify();
-    console.log('✅ SMTP соединение установлено');
-    
-    const mailOptions = {
-      from: `"vinyl-shop" <${emailConfig.auth.user}>`,
+    console.log(`📧 Отправка письма восстановления через SendGrid на ${userEmail}...`)
+    await sgMail.send({
       to: userEmail,
+      from: 'kai22851@yandex.ru',
       subject: `🔐 vinyl-shop: восстановление пароля`,
-      html: generateResetPasswordEmail(resetUrl, login),
-      headers: { 'Date': new Date().toUTCString() }
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Письмо восстановления отправлено! ID:', info.messageId);
-    return { success: true };
+      html: generateResetPasswordEmail(resetUrl, login)
+    })
+    console.log('✅ Письмо восстановления отправлено!')
+    return { success: true }
   } catch (error) {
-    console.error('❌ Ошибка отправки письма восстановления:', error.message);
-    return { success: false, error: error.message };
+    console.error('❌ Ошибка отправки:', error.message)
+    return { success: false, error: error.message }
   }
 }
 

@@ -419,8 +419,8 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
       throw new Error('Missing required parameters for reset email');
     }
 
-    // Формируем полную ссылку для кнопки
-    const fullResetUrl = `https://vinyl-shop-six.vercel.app/reset-password?token=${resetUrl}`;
+    // resetUrl — уже полная ссылка, ничего не добавляем
+    const fullResetUrl = resetUrl;  // ← просто используем как есть
 
     const response = await emailjs.send(
       'service_7fk0keo',
@@ -428,9 +428,8 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
       {
         to_email: userEmail,
         user_login: login,
-        reset_link: fullResetUrl,
-        subject: '🔐 vinyl-shop: восстановление пароля',
-        button_url: fullResetUrl  // отдельная переменная для кнопки
+        button_url: fullResetUrl,
+        subject: '🔐 vinyl-shop: восстановление пароля'
       }
     );
 

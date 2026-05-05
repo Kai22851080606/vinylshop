@@ -389,7 +389,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       {
         to_email: userEmail,
         order_id: orderId,
-        confirm_url: `https://vinyl-shop-pea6.onrender.com/api/confirm-order/${orderId}`,  // ←直接用 orderId
+        confirm_url: `https://vinyl-shop-pea6.onrender.com/api/orders/confirm/${orderId}`,
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
         column_header: 'Наименование товара',
         items_html: itemsHtml,

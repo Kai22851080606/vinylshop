@@ -1,12 +1,18 @@
-
 // server/server.cjs
 const express = require('express');
 const cors = require('cors');
+const emailjs = require('@emailjs/nodejs');
 const { vinyls, news, artists, services, promotions, users, orders, favorites, favoriteNews, sessions, passwordResets, reviews, ratings, db } = require('./db.cjs');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
+// ===== ИНИЦИАЛИЗАЦИЯ EMAILJS (ОДИН РАЗ ПРИ ЗАПУСКЕ) =====
+emailjs.init({
+  publicKey: process.env.EMAILJS_PUBLIC_KEY,
+  privateKey: process.env.EMAILJS_PRIVATE_KEY
+});
 
 // ===== Корневой маршрут =====
 app.get('/', (req, res) => {
@@ -78,7 +84,6 @@ function generateOrderEmail(orderData, orderId) {
         </tr>
       `;
     } else {
-      // Проверяем, есть ли у item поле artist (значит это артист)
       const isArtist = item.artist && item.artist.trim() !== '';
       const itemTitle = isArtist 
         ? `Заказать на мероприятие артиста ${escapeHtml(item.name)}`
@@ -339,15 +344,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
-// ===== Настройка EmailJS (один раз) =====
-const emailjs = require('@emailjs/nodejs');
-
-// Инициализация с ключами (ВАЖНО!)
-emailjs.init({
-  publicKey: process.env.EMAILJS_PUBLIC_KEY,
-  privateKey: process.env.EMAILJS_PRIVATE_KEY
-});
 
 // ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {
@@ -622,6 +618,7 @@ app.delete('/api/artists/:id/permanent', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 app.post('/api/news/:id/view', async (req, res) => {
   try {
     await news.incrementViews(req.params.id);
@@ -1403,6 +1400,6 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`📁 База данных: server/database.sqlite`);
-  console.log(`📧 Email через Яндекс (пароль приложения настроен)`);
-  console.log(`🚀 Сервер работает и ждет запросы...`);
+  console.log(`📧 Email через EmailJS`);
+  console.log(`🚀 Сервер работает на порту ${PORT}`);
 });

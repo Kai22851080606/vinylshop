@@ -2,7 +2,6 @@
 // server/server.cjs
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const { vinyls, news, artists, services, promotions, users, orders, favorites, favoriteNews, sessions, passwordResets, reviews, ratings, db } = require('./db.cjs');
 
 const app = express();

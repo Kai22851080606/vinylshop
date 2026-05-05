@@ -373,7 +373,7 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
     
     const response = await emailjs.send(
       'service_7fk0keo',
-      '__ejs-test-mail-service__',
+      'template_26u1aya',
       {
         to_email: userEmail,
         subject: `🔐 vinyl-shop: восстановление пароля`,

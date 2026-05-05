@@ -346,7 +346,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
     
     const response = await emailjs.send(
       'service_7fk0keo',
-      '__ejs-test-mail-service__',
+      'template_nidbyz6',
       {
         to_email: userEmail,
         subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,

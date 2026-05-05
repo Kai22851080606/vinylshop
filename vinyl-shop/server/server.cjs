@@ -354,8 +354,6 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       throw new Error('Missing required parameters for order email');
     }
     
-    // orderNumber = orderId (просто используем orderId напрямую)
-    
     let itemsHtml = '';
     try {
       const items = orderData.items || [];
@@ -372,11 +370,11 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
           </tr>
         `).join('');
       } else {
-        itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Детали заказа уточняются</td></tr>';
+        itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Детали заказа уточняются<\/td><\/tr>';
       }
     } catch (e) {
       console.error('Ошибка парсинга товаров:', e);
-      itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров</td></tr>';
+      itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров<\/td><\/tr>';
     }
 
     const isCash = orderData.payment?.method === 'cash' || !orderData.payment?.method;
@@ -388,7 +386,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       'template_nidbyz6',
       {
         to_email: userEmail,
-        order_id: orderId,
+        order_id: String(orderId),  // ← ВАЖНО: преобразуем в строку
         confirm_url: `https://vinyl-shop-six.vercel.app/confirm-order/${orderId}`,
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
         column_header: 'Наименование товара',
@@ -401,7 +399,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       }
     );
 
-    console.log('✅ Email успешно отправлен!');
+    console.log('✅ Email успешно отправлен! ID заказа:', orderId);
     return { success: true };
   } catch (error) {
     const errorMsg = error?.text || error?.message || 'Unknown EmailJS Error';
@@ -1127,31 +1125,27 @@ app.post('/api/create-session', async (req, res) => {
 // Восстановление пароля — поиск по ЛОГИНУ, отправка на введённый email
 app.post('/api/forgot-password', async (req, res) => {
   try {
-    const { login, email } = req.body;
-    console.log('🔑 Запрос на восстановление пароля:', { login, email });
+    const { email } = req.body;
+    console.log('🔑 Запрос на восстановление пароля для email:', email);
     
-    // Ищем пользователя по логину
-    const user = await users.getByUsername(login);
+    const user = await users.getByEmail(email);
     
     if (!user) {
-      console.log('❌ Пользователь не найден по логину:', login);
-      return res.json({ success: false, message: 'Пользователь с таким логином не найден' });
+      console.log('❌ Пользователь не найден по email:', email);
+      return res.json({ success: false, message: 'Пользователь с таким email не найден' });
     }
     
     console.log('👤 Найден пользователь:', user.username);
     
-    // Генерируем токен
     const token = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
     const expiresAt = new Date(Date.now() + 3600000).toISOString();
     
-    // Сохраняем email и ЛОГИН
-    await passwordResets.create(email, token, expiresAt, login);
+    await passwordResets.create(email, token, expiresAt, user.username);
     
     const resetUrl = `https://vinyl-shop-six.vercel.app/reset-password?token=${token}`;
     console.log(`🔐 Ссылка для восстановления: ${resetUrl}`);
     
-    // Отправляем письмо
-    sendResetPasswordEmail(email, resetUrl, login)
+    sendResetPasswordEmail(email, resetUrl, user.username)
       .then(() => console.log('✅ Письмо восстановления отправлено'))
       .catch(err => console.error('❌ Ошибка отправки письма:', err));
     

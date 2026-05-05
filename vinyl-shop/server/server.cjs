@@ -338,29 +338,26 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+emailjs.init({
+  publicKey: process.env.EMAILJS_PUBLIC_KEY,
+  privateKey: process.env.EMAILJS_PRIVATE_KEY,
+});
+
 // ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {
   try {
     console.log(`📧 Отправка через EmailJS на ${userEmail}...`);
 
-    // Проверка наличия ключей EmailJS
-    if (!process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
-      throw new Error('EmailJS API keys are not configured. Check EMAILJS_PUBLIC_KEY and EMAILJS_PRIVATE_KEY');
-    }
-
     // Проверка обязательных параметров
-    if (!userEmail) {
-      throw new Error('User email is required for sending email');
-    }
-    if (!orderId) {
-      throw new Error('Order ID is required for email subject');
-    }
-    if (!orderData) {
-      throw new Error('Order data is required to generate email content');
+    if (!userEmail || !orderId || !orderData) {
+      throw new Error('Missing required parameters for sending order email');
     }
 
     const htmlContent = generateOrderEmail(orderData, orderId);
 
+    // В Node.js SDK ключи берутся из глобального init(), 
+    // поэтому 4-й аргумент здесь больше не нужен.
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_nidbyz6',
@@ -368,21 +365,13 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
         to_email: userEmail,
         subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
         html_message: htmlContent
-      },
-      {
-        publicKey: process.env.EMAILJS_PUBLIC_KEY,
-        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
     );
 
-    console.log('✅ Email успешно отправлен! Response:', response);
+    console.log('✅ Email успешно отправлен!');
     return { success: true, response };
   } catch (error) {
-    console.error('❌ Ошибка при отправке email:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
+    console.error('❌ Ошибка при отправке email:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -390,23 +379,10 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
 // ===== Функция отправки email для восстановления пароля =====
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   try {
-    console.log(`📧 Отправка письма восстановления через EmailJS на ${userEmail}...`);
+    console.log(`📧 Отправка письма восстановления на ${userEmail}...`);
 
-
-    // Проверка наличия ключей EmailJS
-    if (!process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
-      throw new Error('EmailJS API keys are not configured. Check EMAILJS_PUBLIC_KEY and EMAILJS_PRIVATE_KEY');
-    }
-
-    // Проверка обязательных параметров
-    if (!userEmail) {
-      throw new Error('User email is required for sending reset password email');
-    }
-    if (!resetUrl) {
-      throw new Error('Reset URL is required for password reset email');
-    }
-    if (!login) {
-      throw new Error('Login is required for password reset email content');
+    if (!userEmail || !resetUrl || !login) {
+      throw new Error('Missing required parameters for reset email');
     }
 
     const htmlContent = generateResetPasswordEmail(resetUrl, login);
@@ -418,21 +394,13 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
         to_email: userEmail,
         subject: `🔐 vinyl-shop: восстановление пароля`,
         html_message: htmlContent
-      },
-      {
-        publicKey: process.env.EMAILJS_PUBLIC_KEY,
-        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
     );
 
-    console.log('✅ Письмо восстановления успешно отправлено! Response:', response);
+    console.log('✅ Письмо восстановления успешно отправлено!');
     return { success: true, response };
   } catch (error) {
-    console.error('❌ Ошибка при отправке письма восстановления:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
+    console.error('❌ Ошибка при отправке письма восстановления:', error.message);
     return { success: false, error: error.message };
   }
 }

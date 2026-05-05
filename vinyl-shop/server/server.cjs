@@ -379,25 +379,35 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров</td></tr>';
     }
 
+    // Определяем способ оплаты динамически
+    // Проверяем поля order_type или payment_method (смотря как у вас в базе)
+    const isCash = orderData.order_type === 'pickup' || orderData.payment_method === 'cash';
+    const paymentMethodText = isCash ? 'Наличными при получении' : 'Банковская карта (онлайн)';
+    const cardInfoText = isCash ? 'Не требуется' : (orderData.card_last4 ? `**** **** **** ${orderData.card_last4}` : 'Карта не указана');
+
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_nidbyz6',
       {
-        // 1. ПОЧИНЕНО: Добавляем получателя. В шаблоне EmailJS в поле "To Email" должно стоять {{to_email}}
         to_email: userEmail, 
-        
         order_id: orderId,
-        // 2. ПОЧИНЕНО: Исправлен формат ссылки и добавлен правильный домен
-        confirm_url: `https://onrender.com{orderId}`,
+        
+        // ПОЧИНЕНО: Правильный URL с использованием вашего домена
+        confirmUrl = `https://vinyl-shop-pea6.onrender.com/api/confirm-order/${orderNumber}`,
         
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
         column_header: 'Наименование товара',
         items_html: itemsHtml, 
-        total: orderData.total_price || 0,
+        
+        // ПОЧИНЕНО: Проверка суммы в разных полях базы
+        total: orderData.total_price || orderData.total || 0,
+        
         customer_name: `${orderData.customer_name || ''} ${orderData.customer_lastname || ''}`.trim() || 'Уважаемый клиент',
         customer_email: userEmail,
-        payment_method: 'Банковская карта (онлайн)',
-        card_info: orderData.card_last4 ? `**** **** **** ${orderData.card_last4}` : 'Карта не указана'
+        
+        // ПОЧИНЕНО: Теперь способ оплаты зависит от данных заказа
+        payment_method: paymentMethodText,
+        card_info: cardInfoText
       }
     );
 
@@ -411,6 +421,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
 }
 
 
+
 // ===== Функция отправки email для восстановления пароля =====
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   try {
@@ -420,14 +431,18 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
       throw new Error('Missing required parameters for reset email');
     }
 
+    // Формируем полную ссылку для кнопки
+    const fullResetUrl = `https://vinyl-shop-pea6.onrender.com/reset-password?token=${resetUrl}`;
+
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_26u1aya',
       {
         to_email: userEmail,
         user_login: login,
-        reset_link: resetUrl,
-        subject: '🔐 vinyl-shop: восстановление пароля'
+        reset_link: fullResetUrl,
+        subject: '🔐 vinyl-shop: восстановление пароля',
+        button_url: fullResetUrl  // отдельная переменная для кнопки
       }
     );
 

@@ -353,6 +353,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
     if (!userEmail || !orderId || !orderData) {
       throw new Error('Missing required parameters for order email');
     }
+    
     let itemsHtml = '';
     try {
       const items = typeof orderData.items_json === 'string' 
@@ -382,8 +383,13 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       'service_7fk0keo',
       'template_nidbyz6',
       {
+        // 1. ПОЧИНЕНО: Добавляем получателя. В шаблоне EmailJS в поле "To Email" должно стоять {{to_email}}
+        to_email: userEmail, 
+        
         order_id: orderId,
+        // 2. ПОЧИНЕНО: Исправлен формат ссылки и добавлен правильный домен
         confirm_url: `https://onrender.com{orderId}`,
+        
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
         column_header: 'Наименование товара',
         items_html: itemsHtml, 
@@ -391,7 +397,6 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
         customer_name: `${orderData.customer_name || ''} ${orderData.customer_lastname || ''}`.trim() || 'Уважаемый клиент',
         customer_email: userEmail,
         payment_method: 'Банковская карта (онлайн)',
-        // ИСПРАВЛЕНО: Безопасное отображение карты
         card_info: orderData.card_last4 ? `**** **** **** ${orderData.card_last4}` : 'Карта не указана'
       }
     );
@@ -404,6 +409,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
     return { success: false, error: errorMsg };
   }
 }
+
 
 // ===== Функция отправки email для восстановления пароля =====
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {

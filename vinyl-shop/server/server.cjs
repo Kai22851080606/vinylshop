@@ -1223,8 +1223,8 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// ВАЖНО: /api/orders/confirmed ДОЛЖЕН быть перед /api/orders/:id
-app.get('/api/orders/confirmed', async (req, res) => {
+
+app.post('/api/orders/confirmed', async (req, res) => {
   try {
     db.all(
       "SELECT * FROM orders WHERE confirmed = 1 OR status = 'confirmed' ORDER BY created_at DESC",

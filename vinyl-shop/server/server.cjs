@@ -343,6 +343,12 @@ function escapeHtml(str) {
 // ===== Настройка EmailJS (один раз) =====
 const emailjs = require('@emailjs/nodejs');
 
+// Инициализация с ключами (ВАЖНО!)
+emailjs.init({
+  publicKey: process.env.EMAILJS_PUBLIC_KEY,
+  privateKey: process.env.EMAILJS_PRIVATE_KEY
+});
+
 // ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {
   try {
@@ -355,10 +361,6 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
         to_email: userEmail,
         subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
         html_message: generateOrderEmail(orderData, orderId)
-      },
-      {
-        publicKey: process.env.EMAILJS_PUBLIC_KEY,
-        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
     )
     
@@ -382,10 +384,6 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
         to_email: userEmail,
         subject: `🔐 vinyl-shop: восстановление пароля`,
         html_message: generateResetPasswordEmail(resetUrl, login)
-      },
-      {
-        publicKey: process.env.EMAILJS_PUBLIC_KEY,
-        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
     )
     

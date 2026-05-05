@@ -353,23 +353,52 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
     if (!userEmail || !orderId || !orderData) {
       throw new Error('Missing required parameters for order email');
     }
-
-    const htmlContent = generateOrderEmail(orderData, orderId);
+    let itemsHtml = '';
+    try {
+      const items = typeof orderData.items_json === 'string' 
+        ? JSON.parse(orderData.items_json) 
+        : (orderData.items || []);
+        
+      if (items.length > 0) {
+        itemsHtml = items.map(item => `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+              ${item.item_title || item.title || 'Пластинка'} — ${item.item_artist || item.artist || 'Артист'}
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">
+              ${item.price || item.total_price || 0} ₽
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Детали заказа уточняются</td></tr>';
+      }
+    } catch (e) {
+      console.error('Ошибка парсинга товаров:', e);
+      itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров</td></tr>';
+    }
 
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_nidbyz6',
       {
-        to_email: userEmail,
-        subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
-        html_message: htmlContent
+        order_id: orderId,
+        confirm_url: `https://onrender.com{orderId}`,
+        order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
+        column_header: 'Наименование товара',
+        items_html: itemsHtml, 
+        total: orderData.total_price || 0,
+        customer_name: `${orderData.customer_name || ''} ${orderData.customer_lastname || ''}`.trim() || 'Уважаемый клиент',
+        customer_email: userEmail,
+        payment_method: 'Банковская карта (онлайн)',
+        // ИСПРАВЛЕНО: Безопасное отображение карты
+        card_info: orderData.card_last4 ? `**** **** **** ${orderData.card_last4}` : 'Карта не указана'
       }
     );
 
     console.log('✅ Email успешно отправлен!', response.status, response.text);
     return { success: true };
   } catch (error) {
-    // EmailJS в Node.js может возвращать ошибку как объект со свойствами status и text
     const errorMsg = error?.text || error?.message || 'Unknown EmailJS Error';
     console.error('❌ Ошибка EmailJS (Заказ):', errorMsg);
     return { success: false, error: errorMsg };
@@ -385,19 +414,18 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
       throw new Error('Missing required parameters for reset email');
     }
 
-    const htmlContent = generateResetPasswordEmail(resetUrl, login);
-
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_26u1aya',
       {
         to_email: userEmail,
-        subject: `🔐 vinyl-shop: восстановление пароля`,
-        html_message: htmlContent
+        user_login: login,
+        reset_link: resetUrl,
+        subject: '🔐 vinyl-shop: восстановление пароля'
       }
     );
 
-    console.log('✅ Письмо восстановления отправлено!', response.status, response.text);
+    console.log('✅ Письмо восстановления отправлено!');
     return { success: true };
   } catch (error) {
     const errorMsg = error?.text || error?.message || 'Unknown EmailJS Error';
@@ -405,7 +433,6 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
     return { success: false, error: errorMsg };
   }
 }
-
 
 // ===== Пластинки =====
 app.get('/api/vinyls', async (req, res) => {

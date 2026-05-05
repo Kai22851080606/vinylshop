@@ -393,7 +393,7 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
         order_id: orderId,
         
         // ПОЧИНЕНО: Правильный URL с использованием вашего домена
-        confirmUrl = `https://vinyl-shop-pea6.onrender.com/api/confirm-order/${orderNumber}`,
+        confirm_url: `https://vinyl-shop-pea6.onrender.com/api/confirm-order/${orderNumber}`,
         
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
         column_header: 'Наименование товара',

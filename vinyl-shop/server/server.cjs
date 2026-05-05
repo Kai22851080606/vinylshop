@@ -8,12 +8,6 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// ===== ИНИЦИАЛИЗАЦИЯ EMAILJS (ОДИН РАЗ ПРИ ЗАПУСКЕ) =====
-emailjs.init({
-  publicKey: process.env.EMAILJS_PUBLIC_KEY,
-  privateKey: process.env.EMAILJS_PRIVATE_KEY
-});
-
 // ===== Корневой маршрут =====
 app.get('/', (req, res) => {
   res.json({ message: 'vinyl-shop API работает!' });
@@ -357,6 +351,10 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
         to_email: userEmail,
         subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
         html_message: generateOrderEmail(orderData, orderId)
+      },
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
     )
     
@@ -380,6 +378,10 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
         to_email: userEmail,
         subject: `🔐 vinyl-shop: восстановление пароля`,
         html_message: generateResetPasswordEmail(resetUrl, login)
+      },
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
     )
     

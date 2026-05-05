@@ -338,60 +338,105 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
 // ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {
   try {
-    console.log(`📧 Отправка через EmailJS на ${userEmail}...`)
-    
+    console.log(`📧 Отправка через EmailJS на ${userEmail}...`);
+
+    // Проверка наличия ключей EmailJS
+    if (!process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
+      throw new Error('EmailJS API keys are not configured. Check EMAILJS_PUBLIC_KEY and EMAILJS_PRIVATE_KEY');
+    }
+
+    // Проверка обязательных параметров
+    if (!userEmail) {
+      throw new Error('User email is required for sending email');
+    }
+    if (!orderId) {
+      throw new Error('Order ID is required for email subject');
+    }
+    if (!orderData) {
+      throw new Error('Order data is required to generate email content');
+    }
+
+    const htmlContent = generateOrderEmail(orderData, orderId);
+
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_nidbyz6',
       {
         to_email: userEmail,
         subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
-        html_message: generateOrderEmail(orderData, orderId)
+        html_message: htmlContent
       },
       {
         publicKey: process.env.EMAILJS_PUBLIC_KEY,
         privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
-    )
-    
-    console.log('✅ Email отправлен!')
-    return { success: true }
+    );
+
+    console.log('✅ Email успешно отправлен! Response:', response);
+    return { success: true, response };
   } catch (error) {
-    console.error('❌ Ошибка:', error.message)
-    return { success: false, error: error.message }
+    console.error('❌ Ошибка при отправке email:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return { success: false, error: error.message };
   }
 }
 
 // ===== Функция отправки email для восстановления пароля =====
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   try {
-    console.log(`📧 Отправка письма восстановления через EmailJS на ${userEmail}...`)
-    
+    console.log(`📧 Отправка письма восстановления через EmailJS на ${userEmail}...`);
+
+
+    // Проверка наличия ключей EmailJS
+    if (!process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_PRIVATE_KEY) {
+      throw new Error('EmailJS API keys are not configured. Check EMAILJS_PUBLIC_KEY and EMAILJS_PRIVATE_KEY');
+    }
+
+    // Проверка обязательных параметров
+    if (!userEmail) {
+      throw new Error('User email is required for sending reset password email');
+    }
+    if (!resetUrl) {
+      throw new Error('Reset URL is required for password reset email');
+    }
+    if (!login) {
+      throw new Error('Login is required for password reset email content');
+    }
+
+    const htmlContent = generateResetPasswordEmail(resetUrl, login);
+
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_26u1aya',
       {
         to_email: userEmail,
         subject: `🔐 vinyl-shop: восстановление пароля`,
-        html_message: generateResetPasswordEmail(resetUrl, login)
+        html_message: htmlContent
       },
       {
         publicKey: process.env.EMAILJS_PUBLIC_KEY,
         privateKey: process.env.EMAILJS_PRIVATE_KEY
       }
-    )
-    
-    console.log('✅ Письмо восстановления отправлено!')
-    return { success: true }
+    );
+
+    console.log('✅ Письмо восстановления успешно отправлено! Response:', response);
+    return { success: true, response };
   } catch (error) {
-    console.error('❌ Ошибка отправки:', error.message)
-    return { success: false, error: error.message }
+    console.error('❌ Ошибка при отправке письма восстановления:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    return { success: false, error: error.message };
   }
 }
+
 
 // ===== Пластинки =====
 app.get('/api/vinyls', async (req, res) => {

@@ -354,20 +354,20 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       throw new Error('Missing required parameters for order email');
     }
     
+    // orderNumber = orderId (просто используем orderId напрямую)
+    
     let itemsHtml = '';
     try {
-      const items = typeof orderData.items_json === 'string' 
-        ? JSON.parse(orderData.items_json) 
-        : (orderData.items || []);
+      const items = orderData.items || [];
         
       if (items.length > 0) {
         itemsHtml = items.map(item => `
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
-              ${item.item_title || item.title || 'Пластинка'} — ${item.item_artist || item.artist || 'Артист'}
+              ${item.title || 'Пластинка'} — ${item.artist || 'Артист'}
             </td>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">
-              ${item.price || item.total_price || 0} ₽
+              ${(item.price || 0) * (item.quantity || 1)} ₽
             </td>
           </tr>
         `).join('');
@@ -379,39 +379,29 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров</td></tr>';
     }
 
-    // Определяем способ оплаты динамически
-    // Проверяем поля order_type или payment_method (смотря как у вас в базе)
-    const isCash = orderData.order_type === 'pickup' || orderData.payment_method === 'cash';
-    const paymentMethodText = isCash ? 'Наличными при получении' : 'Банковская карта (онлайн)';
-    const cardInfoText = isCash ? 'Не требуется' : (orderData.card_last4 ? `**** **** **** ${orderData.card_last4}` : 'Карта не указана');
+    const isCash = orderData.payment?.method === 'cash' || !orderData.payment?.method;
+    const paymentMethodText = isCash ? 'Наличными при получении' : 'Банковская карта';
+    const cardInfoText = isCash ? 'Не требуется' : (orderData.payment?.card_last4 ? `**** **** **** ${orderData.payment.card_last4}` : 'Карта не указана');
 
     const response = await emailjs.send(
       'service_7fk0keo',
       'template_nidbyz6',
       {
-        to_email: userEmail, 
+        to_email: userEmail,
         order_id: orderId,
-        
-        // ПОЧИНЕНО: Правильный URL с использованием вашего домена
-        confirm_url: `https://vinyl-shop-pea6.onrender.com/api/confirm-order/${orderNumber}`,
-        
+        confirm_url: `https://vinyl-shop-pea6.onrender.com/api/confirm-order/${orderId}`,  // ←直接用 orderId
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
         column_header: 'Наименование товара',
-        items_html: itemsHtml, 
-        
-        // ПОЧИНЕНО: Проверка суммы в разных полях базы
-        total: orderData.total_price || orderData.total || 0,
-        
-        customer_name: `${orderData.customer_name || ''} ${orderData.customer_lastname || ''}`.trim() || 'Уважаемый клиент',
+        items_html: itemsHtml,
+        total: orderData.total || 0,
+        customer_name: `${orderData.customer?.firstName || ''} ${orderData.customer?.lastName || ''}`.trim() || 'Уважаемый клиент',
         customer_email: userEmail,
-        
-        // ПОЧИНЕНО: Теперь способ оплаты зависит от данных заказа
         payment_method: paymentMethodText,
         card_info: cardInfoText
       }
     );
 
-    console.log('✅ Email успешно отправлен!', response.status, response.text);
+    console.log('✅ Email успешно отправлен!');
     return { success: true };
   } catch (error) {
     const errorMsg = error?.text || error?.message || 'Unknown EmailJS Error';

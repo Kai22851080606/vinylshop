@@ -410,8 +410,6 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
   }
 }
 
-
-
 // ===== Функция отправки email для восстановления пароля =====
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   try {
@@ -1390,7 +1388,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // ===== Подтверждение заказа =====
-app.post('/api/orders/confirm/:orderId', async (req, res) => {
+app.get('/api/orders/confirm/:orderId', async (req, res) => {
   try {
     const { orderId } = req.params;
     console.log('📦 Запрос на подтверждение заказа #' + orderId);

@@ -1420,6 +1420,272 @@ app.get('/api/orders/confirm/:orderId', async (req, res) => {
   }
 });
 
+// Получить корзину пользователя
+app.get('/api/cart/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    db.all(
+      `SELECT c.*, 
+              CASE 
+                WHEN c.item_type = 'vinyl' THEN v.title
+                WHEN c.item_type = 'service' THEN s.name
+              END as name,
+              CASE 
+                WHEN c.item_type = 'vinyl' THEN v.artist
+                WHEN c.item_type = 'service' THEN NULL
+              END as artist,
+              CASE 
+                WHEN c.item_type = 'vinyl' THEN v.price
+                WHEN c.item_type = 'service' THEN s.price
+              END as price,
+              CASE 
+                WHEN c.item_type = 'vinyl' THEN v.image
+                WHEN c.item_type = 'service' THEN s.image
+              END as image,
+              CASE 
+                WHEN c.item_type = 'vinyl' THEN v.stock
+                WHEN c.item_type = 'service' THEN 999
+              END as stock
+       FROM cart c
+       LEFT JOIN vinyls v ON c.item_type = 'vinyl' AND c.item_id = v.id AND v.deleted = 0
+       LEFT JOIN services s ON c.item_type = 'service' AND c.item_id = s.id AND s.deleted = 0
+       WHERE c.user_id = ?
+       ORDER BY c.created_at DESC`,
+      [userId],
+      (err, rows) => {
+        if (err) {
+          console.error('❌ Ошибка получения корзины:', err);
+          return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+        res.json({ success: true, items: rows || [] });
+      }
+    );
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// Добавить товар в корзину
+app.post('/api/cart/add', async (req, res) => {
+  try {
+    const { userId, itemType, itemId, quantity = 1 } = req.body;
+    
+    if (!userId || !itemType || !itemId) {
+      return res.status(400).json({ success: false, message: 'Не все поля заполнены' });
+    }
+    
+    db.get(
+      'SELECT * FROM cart WHERE user_id = ? AND item_type = ? AND item_id = ?',
+      [userId, itemType, itemId],
+      (err, existing) => {
+        if (err) {
+          console.error('❌ Ошибка проверки корзины:', err);
+          return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+        
+        if (existing) {
+          db.run(
+            'UPDATE cart SET quantity = quantity + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [quantity, existing.id],
+            function(err) {
+              if (err) {
+                console.error('❌ Ошибка обновления корзины:', err);
+                return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+              }
+              res.json({ success: true, message: 'Количество обновлено' });
+            }
+          );
+        } else {
+          db.run(
+            'INSERT INTO cart (user_id, item_type, item_id, quantity) VALUES (?, ?, ?, ?)',
+            [userId, itemType, itemId, quantity],
+            function(err) {
+              if (err) {
+                console.error('❌ Ошибка добавления в корзину:', err);
+                return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+              }
+              res.json({ success: true, message: 'Товар добавлен в корзину' });
+            }
+          );
+        }
+      }
+    );
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// Удалить товар из корзины
+app.delete('/api/cart/remove', async (req, res) => {
+  try {
+    const { userId, itemType, itemId } = req.body;
+    
+    if (!userId || !itemType || !itemId) {
+      return res.status(400).json({ success: false, message: 'Не все поля заполнены' });
+    }
+    
+    db.run(
+      'DELETE FROM cart WHERE user_id = ? AND item_type = ? AND item_id = ?',
+      [userId, itemType, itemId],
+      function(err) {
+        if (err) {
+          console.error('❌ Ошибка удаления из корзины:', err);
+          return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+        res.json({ success: true, message: 'Товар удалён из корзины' });
+      }
+    );
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// Очистить всю корзину пользователя
+app.delete('/api/cart/clear/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    db.run('DELETE FROM cart WHERE user_id = ?', [userId], function(err) {
+      if (err) {
+        console.error('❌ Ошибка очистки корзины:', err);
+        return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+      }
+      res.json({ success: true, message: 'Корзина очищена' });
+    });
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// Обновить количество товара в корзине
+app.put('/api/cart/update', async (req, res) => {
+  try {
+    const { userId, itemType, itemId, quantity } = req.body;
+    
+    if (!userId || !itemType || !itemId || !quantity || quantity < 1) {
+      return res.status(400).json({ success: false, message: 'Неверные данные' });
+    }
+    
+    db.run(
+      'UPDATE cart SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND item_type = ? AND item_id = ?',
+      [quantity, userId, itemType, itemId],
+      function(err) {
+        if (err) {
+          console.error('❌ Ошибка обновления количества:', err);
+          return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+        res.json({ success: true, message: 'Количество обновлено' });
+      }
+    );
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// ===== ПРОСМОТРЫ =====
+
+// Сохранить просмотр
+app.post('/api/views/add', async (req, res) => {
+  try {
+    const { userId, itemType, itemId } = req.body;
+    
+    if (!userId || !itemType || !itemId) {
+      return res.status(400).json({ success: false, message: 'Не все поля заполнены' });
+    }
+    
+    db.run(
+      `INSERT INTO views (user_id, item_type, item_id, viewed_at) 
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(user_id, item_type, item_id) 
+       DO UPDATE SET viewed_at = CURRENT_TIMESTAMP`,
+      [userId, itemType, itemId],
+      function(err) {
+        if (err) {
+          console.error('❌ Ошибка сохранения просмотра:', err);
+          return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+        res.json({ success: true, message: 'Просмотр сохранён' });
+      }
+    );
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// Получить последние просмотры пользователя
+app.get('/api/views/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit = 20 } = req.query;
+    
+    db.all(
+      `SELECT v.*,
+              CASE 
+                WHEN v.item_type = 'vinyl' THEN vin.title
+                WHEN v.item_type = 'news' THEN n.title
+                WHEN v.item_type = 'service' THEN s.name
+                WHEN v.item_type = 'artist' THEN a.name
+              END as title,
+              CASE 
+                WHEN v.item_type = 'vinyl' THEN vin.artist
+                WHEN v.item_type = 'news' THEN NULL
+                WHEN v.item_type = 'service' THEN NULL
+                WHEN v.item_type = 'artist' THEN NULL
+              END as artist,
+              CASE 
+                WHEN v.item_type = 'vinyl' THEN vin.image
+                WHEN v.item_type = 'news' THEN n.image
+                WHEN v.item_type = 'service' THEN s.image
+                WHEN v.item_type = 'artist' THEN a.image
+              END as image
+       FROM views v
+       LEFT JOIN vinyls vin ON v.item_type = 'vinyl' AND v.item_id = vin.id AND vin.deleted = 0
+       LEFT JOIN news n ON v.item_type = 'news' AND v.item_id = n.id AND n.deleted = 0
+       LEFT JOIN services s ON v.item_type = 'service' AND v.item_id = s.id AND s.deleted = 0
+       LEFT JOIN artists a ON v.item_type = 'artist' AND v.item_id = a.id AND a.deleted = 0
+       WHERE v.user_id = ?
+       ORDER BY v.viewed_at DESC
+       LIMIT ?`,
+      [userId, limit],
+      (err, rows) => {
+        if (err) {
+          console.error('❌ Ошибка получения просмотров:', err);
+          return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+        }
+        res.json({ success: true, items: rows || [] });
+      }
+    );
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
+// Очистить просмотры пользователя
+app.delete('/api/views/clear/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    db.run('DELETE FROM views WHERE user_id = ?', [userId], function(err) {
+      if (err) {
+        console.error('❌ Ошибка очистки просмотров:', err);
+        return res.status(500).json({ success: false, message: 'Ошибка сервера' });
+      }
+      res.json({ success: true, message: 'История просмотров очищена' });
+    });
+  } catch (err) {
+    console.error('❌ Ошибка:', err);
+    res.status(500).json({ success: false, message: 'Ошибка сервера' });
+  }
+});
+
 // ===== Корректное завершение сервера =====
 const gracefulShutdown = (signal) => {
   console.log(`\n🛑 Получен сигнал ${signal}. Закрываем соединения...`);

@@ -341,20 +341,28 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// ===== Настройка SendGrid (один раз) =====
-const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+// ===== Настройка EmailJS (один раз) =====
+const emailjs = require('@emailjs/nodejs');
 
 // ===== Функция отправки email для заказа =====
 async function sendOrderEmail(orderData, userEmail, orderId) {
   try {
-    console.log(`📧 Отправка через SendGrid на ${userEmail}...`)
-    await sgMail.send({
-      to: userEmail,
-      from: 'kai22851@yandex.ru',
-      subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
-      html: generateOrderEmail(orderData, orderId)
-    })
+    console.log(`📧 Отправка через EmailJS на ${userEmail}...`)
+    
+    const response = await emailjs.send(
+      'service_7fk0keo',
+      '__ejs-test-mail-service__',
+      {
+        to_email: userEmail,
+        subject: `✅ vinyl-shop: заказ #${orderId} ожидает подтверждения`,
+        html_message: generateOrderEmail(orderData, orderId)
+      },
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY
+      }
+    )
+    
     console.log('✅ Email отправлен!')
     return { success: true }
   } catch (error) {
@@ -366,13 +374,22 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
 // ===== Функция отправки email для восстановления пароля =====
 async function sendResetPasswordEmail(userEmail, resetUrl, login) {
   try {
-    console.log(`📧 Отправка письма восстановления через SendGrid на ${userEmail}...`)
-    await sgMail.send({
-      to: userEmail,
-      from: 'kai22851@yandex.ru',
-      subject: `🔐 vinyl-shop: восстановление пароля`,
-      html: generateResetPasswordEmail(resetUrl, login)
-    })
+    console.log(`📧 Отправка письма восстановления через EmailJS на ${userEmail}...`)
+    
+    const response = await emailjs.send(
+      'service_7fk0keo',
+      '__ejs-test-mail-service__',
+      {
+        to_email: userEmail,
+        subject: `🔐 vinyl-shop: восстановление пароля`,
+        html_message: generateResetPasswordEmail(resetUrl, login)
+      },
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY
+      }
+    )
+    
     console.log('✅ Письмо восстановления отправлено!')
     return { success: true }
   } catch (error) {

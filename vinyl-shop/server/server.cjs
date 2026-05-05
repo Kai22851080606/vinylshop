@@ -420,7 +420,7 @@ async function sendResetPasswordEmail(userEmail, resetUrl, login) {
     }
 
     // Формируем полную ссылку для кнопки
-    const fullResetUrl = `https://vinyl-shop-pea6.onrender.com/reset-password?token=${resetUrl}`;
+    const fullResetUrl = `https://vinyl-shop-six.vercel.app/reset-password?token=${resetUrl}`;
 
     const response = await emailjs.send(
       'service_7fk0keo',
@@ -1148,7 +1148,7 @@ app.post('/api/forgot-password', async (req, res) => {
     // Сохраняем email и ЛОГИН
     await passwordResets.create(email, token, expiresAt, login);
     
-    const resetUrl = `/reset-password?token=${token}`;
+    const resetUrl = `https://vinyl-shop-six.vercel.app/reset-password?token=${token}`;
     console.log(`🔐 Ссылка для восстановления: ${resetUrl}`);
     
     // Отправляем письмо

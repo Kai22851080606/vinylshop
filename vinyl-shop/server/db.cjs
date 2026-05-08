@@ -1492,70 +1492,139 @@ const ratings = {
   })
 };
 
+// ===== СОХРАНЕНИЕ БАЗЫ В GITHUB ЧЕРЕЗ API =====
 const https = require('https');
 const fs = require('fs');
 
-const RENDER_API_KEY = process.env.RENDER_API_KEY;
-const RENDER_SERVICE_ID = process.env.RENDER_SERVICE_ID;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_REPO = process.env.GITHUB_REPO || 'Kai22851080606/vinylshop';
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
+const GITHUB_FILE_PATH = 'server/database.sqlite';
 
-// Сохранение базы в переменную окружения
-function saveDatabaseToRender() {
-  if (!RENDER_API_KEY || !RENDER_SERVICE_ID) return;
+function saveDatabaseToGitHub() {
+  if (!GITHUB_TOKEN) {
+    console.log('⚠️ GITHUB_TOKEN не настроен');
+    return;
+  }
 
   try {
     const dbPath = path.join(__dirname, 'database.sqlite');
     const dbBuffer = fs.readFileSync(dbPath);
     const dbBase64 = dbBuffer.toString('base64');
 
-    const data = JSON.stringify({ value: dbBase64 });
-
-    const options = {
-      hostname: 'api.render.com',
-      path: `/v1/services/${RENDER_SERVICE_ID}/env-vars/DATABASE_BACKUP`,
-      method: 'PUT',
+    const getFileOptions = {
+      hostname: 'api.github.com',
+      path: `/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?ref=${GITHUB_BRANCH}`,
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${RENDER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data)
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'User-Agent': 'vinyl-shop'
       }
     };
 
-    const req = https.request(options, (res) => {
-      if (res.statusCode === 200) {
-        console.log('💾 База сохранена!');
-      }
+    const getReq = https.request(getFileOptions, (res) => {
+      let body = '';
+      res.on('data', (chunk) => { body += chunk; });
+      res.on('end', () => {
+        let sha = null;
+        if (res.statusCode === 200) {
+          try { sha = JSON.parse(body).sha; } catch (e) {}
+        }
+
+        const putData = JSON.stringify({
+          message: `auto: database backup ${new Date().toISOString()}`,
+          content: dbBase64,
+          branch: GITHUB_BRANCH,
+          ...(sha && { sha: sha })
+        });
+
+        const putOptions = {
+          hostname: 'api.github.com',
+          path: `/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`,
+          method: 'PUT',
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(putData),
+            'User-Agent': 'vinyl-shop'
+          }
+        };
+
+        const putReq = https.request(putOptions, (putRes) => {
+          if (putRes.statusCode === 200 || putRes.statusCode === 201) {
+            console.log('💾 База сохранена в GitHub!');
+          }
+        });
+
+        putReq.on('error', (e) => console.error('Ошибка:', e.message));
+        putReq.write(putData);
+        putReq.end();
+      });
     });
 
-    req.on('error', (e) => console.error('Ошибка:', e.message));
-    req.write(data);
-    req.end();
+    getReq.on('error', (e) => console.error('Ошибка:', e.message));
+    getReq.end();
+
   } catch (e) {
     console.error('Ошибка сохранения:', e.message);
   }
 }
 
-// Восстановление базы при старте
-function restoreDatabaseFromRender() {
-  const dbBase64 = process.env.DATABASE_BACKUP;
-  if (!dbBase64 || dbBase64.length < 100) return;
-
-  try {
-    const dbPath = path.join(__dirname, 'database.sqlite');
-    fs.writeFileSync(dbPath, Buffer.from(dbBase64, 'base64'));
-    console.log('📦 База восстановлена!');
-  } catch (e) {
-    console.error('Ошибка восстановления:', e.message);
+function restoreDatabaseFromGitHub() {
+  const dbPath = path.join(__dirname, 'database.sqlite');
+  
+  if (fs.existsSync(dbPath)) {
+    const stats = fs.statSync(dbPath);
+    if (stats.size > 1000) {
+      console.log('📦 Локальная база существует');
+      return;
+    }
   }
+  
+  if (!GITHUB_TOKEN) {
+    console.log('⚠️ GITHUB_TOKEN не настроен');
+    return;
+  }
+  
+  console.log('📥 Загружаем базу из GitHub...');
+  
+  const options = {
+    hostname: 'api.github.com',
+    path: `/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?ref=${GITHUB_BRANCH}`,
+    method: 'GET',
+    headers: {
+      'Authorization': `token ${GITHUB_TOKEN}`,
+      'User-Agent': 'vinyl-shop'
+    }
+  };
+  
+  const req = https.request(options, (res) => {
+    let body = '';
+    res.on('data', (chunk) => { body += chunk; });
+    res.on('end', () => {
+      if (res.statusCode === 200) {
+        try {
+          const data = JSON.parse(body);
+          if (data.content) {
+            fs.writeFileSync(dbPath, Buffer.from(data.content, 'base64'));
+            console.log('✅ База восстановлена из GitHub!');
+          }
+        } catch (e) {
+          console.error('Ошибка:', e.message);
+        }
+      }
+    });
+  });
+  
+  req.on('error', (e) => console.error('Ошибка:', e.message));
+  req.end();
 }
 
-// Восстанавливаем при запуске
-restoreDatabaseFromRender();
-
-// Сохраняем каждую минуту
-setInterval(saveDatabaseToRender, 60000);
-
-// Сохраняем при выключении
-process.on('SIGTERM', () => { saveDatabaseToRender(); process.exit(0); });
-process.on('SIGINT', () => { saveDatabaseToRender(); process.exit(0); });
+// Сохраняем каждые 5 минут
+setInterval(saveDatabaseToGitHub, 300000);
+// Первое сохранение через 30 секунд
+setTimeout(saveDatabaseToGitHub, 30000);
+// Восстановление при старте через 1 секунду
+setTimeout(restoreDatabaseFromGitHub, 1000);
 
 module.exports = { vinyls, news, artists, services, promotions, users, orders, favorites, favoriteNews, sessions, passwordResets, reviews, ratings, db };

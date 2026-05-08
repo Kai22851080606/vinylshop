@@ -1621,7 +1621,7 @@ function restoreDatabaseFromGitHub() {
 }
 
 // Сохраняем каждые 5 минут
-setInterval(saveDatabaseToGitHub, 300000);
+setInterval(saveDatabaseToGitHub, 60000);
 // Первое сохранение через 30 секунд
 setTimeout(saveDatabaseToGitHub, 30000);
 // Восстановление при старте через 1 секунду

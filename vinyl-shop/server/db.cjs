@@ -1492,7 +1492,7 @@ const ratings = {
   })
 };
 
-// ===== СОХРАНЕНИЕ БАЗЫ В GITHUB ЧЕРЕЗ API =====
+
 const https = require('https');
 const fs = require('fs');
 
@@ -1626,5 +1626,17 @@ setInterval(saveDatabaseToGitHub, 60000);
 setTimeout(saveDatabaseToGitHub, 30000);
 // Восстановление при старте через 1 секунду
 setTimeout(restoreDatabaseFromGitHub, 1000);
+
+process.on('SIGTERM', () => { 
+  console.log('🛑 Сервер останавливается, сохраняем базу...');
+  saveDatabaseToGitHub(); 
+  setTimeout(() => process.exit(0), 2000);
+});
+
+process.on('SIGINT', () => { 
+  console.log('🛑 Сервер останавливается, сохраняем базу...');
+  saveDatabaseToGitHub(); 
+  setTimeout(() => process.exit(0), 2000);
+});
 
 module.exports = { vinyls, news, artists, services, promotions, users, orders, favorites, favoriteNews, sessions, passwordResets, reviews, ratings, db };

@@ -1,3 +1,4 @@
+Так?
 // server/db.cjs
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
@@ -1491,5 +1492,72 @@ const ratings = {
     );
   })
 };
+
+const https = require('https');
+const path = require('path');
+const fs = require('fs');
+
+const RENDER_API_KEY = process.env.RENDER_API_KEY;
+const RENDER_SERVICE_ID = process.env.RENDER_SERVICE_ID;
+
+// Сохранение базы в переменную окружения
+function saveDatabaseToRender() {
+  if (!RENDER_API_KEY || !RENDER_SERVICE_ID) return;
+
+  try {
+    const dbPath = path.join(__dirname, 'database.sqlite');
+    const dbBuffer = fs.readFileSync(dbPath);
+    const dbBase64 = dbBuffer.toString('base64');
+
+    const data = JSON.stringify({ value: dbBase64 });
+
+    const options = {
+      hostname: 'api.render.com',
+      path: `/v1/services/${RENDER_SERVICE_ID}/env-vars/DATABASE_BACKUP`,
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${RENDER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode === 200) {
+        console.log('💾 База сохранена!');
+      }
+    });
+
+    req.on('error', (e) => console.error('Ошибка:', e.message));
+    req.write(data);
+    req.end();
+  } catch (e) {
+    console.error('Ошибка сохранения:', e.message);
+  }
+}
+
+// Восстановление базы при старте
+function restoreDatabaseFromRender() {
+  const dbBase64 = process.env.DATABASE_BACKUP;
+  if (!dbBase64 || dbBase64.length < 100) return;
+
+  try {
+    const dbPath = path.join(__dirname, 'database.sqlite');
+    fs.writeFileSync(dbPath, Buffer.from(dbBase64, 'base64'));
+    console.log('📦 База восстановлена!');
+  } catch (e) {
+    console.error('Ошибка восстановления:', e.message);
+  }
+}
+
+// Восстанавливаем при запуске
+restoreDatabaseFromRender();
+
+// Сохраняем каждую минуту
+setInterval(saveDatabaseToRender, 60000);
+
+// Сохраняем при выключении
+process.on('SIGTERM', () => { saveDatabaseToRender(); process.exit(0); });
+process.on('SIGINT', () => { saveDatabaseToRender(); process.exit(0); });
 
 module.exports = { vinyls, news, artists, services, promotions, users, orders, favorites, favoriteNews, sessions, passwordResets, reviews, ratings, db };

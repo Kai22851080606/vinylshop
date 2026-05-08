@@ -1633,10 +1633,4 @@ process.on('SIGTERM', () => {
   setTimeout(() => process.exit(0), 2000);
 });
 
-process.on('SIGINT', () => { 
-  console.log('🛑 Сервер останавливается, сохраняем базу...');
-  saveDatabaseToGitHub(); 
-  setTimeout(() => process.exit(0), 2000);
-});
-
 module.exports = { vinyls, news, artists, services, promotions, users, orders, favorites, favoriteNews, sessions, passwordResets, reviews, ratings, db };

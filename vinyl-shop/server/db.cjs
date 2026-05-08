@@ -1,4 +1,3 @@
-Так?
 // server/db.cjs
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
@@ -1494,7 +1493,6 @@ const ratings = {
 };
 
 const https = require('https');
-const path = require('path');
 const fs = require('fs');
 
 const RENDER_API_KEY = process.env.RENDER_API_KEY;

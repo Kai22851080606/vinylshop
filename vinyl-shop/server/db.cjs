@@ -1497,7 +1497,7 @@ const https = require('https');
 const fs = require('fs');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO = process.env.GITHUB_REPO || 'vinyl-shop/server/database.sqlite';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'Kai22851080606/vinylshop';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
 const GITHUB_FILE_PATH = 'server/database.sqlite';
 

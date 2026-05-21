@@ -354,27 +354,72 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       throw new Error('Missing required parameters for order email');
     }
     
+    // Формируем HTML для товаров в зависимости от типа заказа
     let itemsHtml = '';
     try {
       const items = orderData.items || [];
+      const isVinylOrder = orderData.type === 'vinyl';
         
       if (items.length > 0) {
-        itemsHtml = items.map(item => `
-          <tr>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
-              ${item.title || 'Пластинка'} — ${item.artist || 'Артист'}
-            </td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">
-              ${(item.price || 0) * (item.quantity || 1)} ₽
-            </td>
-          </tr>
-        `).join('');
+        itemsHtml = items.map(item => {
+          const quantity = item.quantity || 1;
+          const itemPrice = item.price || 0;
+          const totalItemPrice = itemPrice * quantity;
+          
+          if (isVinylOrder) {
+            // Для пластинок
+            return `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: flex; align-items: flex-start; gap: 15px;">
+                    <span style="font-size: 24px;">💿</span>
+                    <div>
+                      <div style="font-weight: 600; color: #1e293b;">${escapeHtml(item.title || 'Пластинка')}</div>
+                      <div style="color: #64748b; font-size: 14px;">${escapeHtml(item.artist || '')}</div>
+                      <div style="background: #eff6ff; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px;">
+                        <span style="color: #2563eb; font-weight: 600; font-size: 13px;">Количество: ${quantity} шт.</span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; vertical-align: top;">
+                  <div style="font-weight: 700; color: #2563eb; font-size: 18px;">${totalItemPrice} ₽</div>
+                  <div style="color: #64748b; font-size: 12px;">${itemPrice} ₽ × ${quantity}</div>
+                </td>
+              </tr>
+            `;
+          } else {
+            // Для услуг (включая артистов)
+            const isArtist = item.artist && item.artist.trim() !== '';
+            let serviceTitle = isArtist 
+              ? `Заказать на мероприятие артиста ${escapeHtml(item.name || item.artist)}`
+              : escapeHtml(item.name || item.title || 'Услуга');
+            const serviceType = isArtist ? 'Услуга артиста' : 'Услуга';
+            
+            return `
+              <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
+                  <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 24px;">🎤</span>
+                    <div>
+                      <div style="font-weight: 600; color: #1e293b;">${serviceTitle}</div>
+                      <div style="color: #64748b; font-size: 14px;">${serviceType}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600; color: #2563eb;">
+                  ${itemPrice} ₽
+                </td>
+              </tr>
+            `;
+          }
+        }).join('');
       } else {
-        itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Детали заказа уточняются<\/td><\/tr>';
+        itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Детали заказа уточняются</td></tr>';
       }
     } catch (e) {
       console.error('Ошибка парсинга товаров:', e);
-      itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров<\/td><\/tr>';
+      itemsHtml = '<tr><td colspan="2" style="padding: 12px; text-align: center;">Ошибка обработки списка товаров</td></tr>';
     }
 
     const isCash = orderData.payment?.method === 'cash' || !orderData.payment?.method;
@@ -386,10 +431,10 @@ async function sendOrderEmail(orderData, userEmail, orderId) {
       'template_nidbyz6',
       {
         to_email: userEmail,
-        order_id: String(orderId),  // ← ВАЖНО: преобразуем в строку
+        order_id: String(orderId),
         confirm_url: `https://vinyl-shop-six.vercel.app/confirm-order/${orderId}`,
         order_time: new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }),
-        column_header: 'Наименование товара',
+        column_header: orderData.type === 'vinyl' ? 'Наименование товара' : 'Наименование услуги',
         items_html: itemsHtml,
         total: orderData.total || 0,
         customer_name: `${orderData.customer?.firstName || ''} ${orderData.customer?.lastName || ''}`.trim() || 'Уважаемый клиент',
